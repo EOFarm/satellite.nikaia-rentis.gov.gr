@@ -1,0 +1,8 @@
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=secret
+POSTGRES_DB=pycsw
+PGDATA=/var/lib/postgresql/data/pgdata
+PYCSW_SERVER_URL=https://satellite.nikaia-rentis.gov.gr/pycsw
+PYCSW_URL=https://satellite.nikaia-rentis.gov.gr/pycsw
+TITILER_URL=https://satellite.nikaia-rentis.gov.gr/titiler
+LOCAL_HTTP_BASE_URL=https://satellite.nikaia-rentis.gov.gr/data

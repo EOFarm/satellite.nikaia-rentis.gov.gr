@@ -1,0 +1,70 @@
+services:
+  db:
+    container_name: db
+    image: postgis/postgis:17-3.5
+    env_file:
+      - .env
+    volumes:
+      - db-data:/var/lib/postgresql/data/pgdata
+    ports:
+      - 5432:5432
+
+  pycsw:
+    image: geopython/pycsw:eoepca-staging
+    container_name: pycsw
+    ports:
+      - 8000:8000
+    env_file:
+      - .env
+    volumes:
+      - ./pycsw/pycsw.yml:/etc/pycsw/pycsw.yml
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  titiler:
+    image: ghcr.io/developmentseed/titiler:1.2.0
+    container_name: titiler
+    command: ["uvicorn", "titiler.application.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--proxy-headers", "--forwarded-allow-ips='*'", "--root-path=/titiler"]
+    environment:
+      - CORS_ORIGINS=*
+    restart: unless-stopped
+
+  stac-browser:
+    image: stac-browser:4.0.1
+    container_name: stac-browser
+    ports:
+      - 8080:8080
+    environment:
+      SB_catalogUrl: "https://satellite.nikaia-rentis.gov.gr/pycsw/stac"
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.29.3
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/static:/usr/share/nginx/html:ro
+      - ./data:/data
+    depends_on:
+      - pycsw
+      - titiler
+    restart: unless-stopped
+
+  harvester:
+    image: harvester:0.1.0
+    container_name: harvester
+    env_file:
+      - .env
+    volumes:
+      - ./data:/data
+    environment:
+      - TZ=UTC
+    depends_on:
+      - pycsw
+    restart: unless-stopped
+
+volumes:
+  db-data:
